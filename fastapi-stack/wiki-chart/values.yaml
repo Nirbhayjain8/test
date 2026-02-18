@@ -1,0 +1,34 @@
+fastapi:
+  name: fastapi
+  replicas: 1
+  port: 8000
+  image:
+    repository: fastapi-app
+    tag: latest
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+postgres:
+  name: postgres
+  image: postgres:15
+  db: appdb
+  user: user
+  password: password
+  databaseUrl: postgresql://user:password@postgres:5432/appdb
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+ingress:
+  name: app-ingress
+  host: localhost
+  grafanaService: kube-prometheus-stack-grafana
+
+kube-prometheus-stack:
+  grafana:
+    adminUser: admin
+    adminPassword: admin
+

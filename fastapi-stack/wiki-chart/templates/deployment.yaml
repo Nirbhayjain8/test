@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.fastapi.name }}
+spec:
+  replicas: {{ .Values.fastapi.replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Values.fastapi.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.fastapi.name }}
+    spec:
+      containers:
+        - name: fastapi
+          image: "{{ .Values.fastapi.image.repository }}:{{ .Values.fastapi.image.tag }}"
+          ports:
+            - containerPort: {{ .Values.fastapi.port }}
+          env:
+            - name: DATABASE_URL
+              value: {{ .Values.postgres.databaseUrl | quote }}
+          resources:
+            limits:
+              cpu: {{ .Values.fastapi.resources.limits.cpu }}
+              memory: {{ .Values.fastapi.resources.limits.memory }}
