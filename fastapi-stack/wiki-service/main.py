@@ -1,39 +1,33 @@
-from fastapi import FastAPI, Depends
-from sqlalchemy.orm import Session
-from db import SessionLocal, engine
-from models import User, Post, Base
+from fastapi import FastAPI
 from prometheus_client import Counter, generate_latest
 from fastapi.responses import Response
-
-Base.metadata.create_all(bind=engine)
+import psycopg2
+import os
 
 app = FastAPI()
 
 users_created = Counter("users_created_total", "Total users created")
 posts_created = Counter("posts_created_total", "Total posts created")
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+DB_HOST = os.getenv("DB_HOST", "postgres")
 
-@app.post("/users/")
-def create_user(name: str, db: Session = Depends(get_db)):
-    user = User(name=name)
-    db.add(user)
-    db.commit()
+def get_conn():
+    return psycopg2.connect(
+        host=DB_HOST,
+        database="wiki",
+        user="wiki",
+        password="wiki"
+    )
+
+@app.get("/users/{id}")
+def create_user(id: int):
     users_created.inc()
-    return {"message": "User created"}
+    return {"user_id": id}
 
-@app.post("/posts/")
-def create_post(title: str, db: Session = Depends(get_db)):
-    post = Post(title=title)
-    db.add(post)
-    db.commit()
+@app.get("/posts/{id}")
+def create_post(id: int):
     posts_created.inc()
-    return {"message": "Post created"}
+    return {"post_id": id}
 
 @app.get("/metrics")
 def metrics():
