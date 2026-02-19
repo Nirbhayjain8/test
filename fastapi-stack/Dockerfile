@@ -1,19 +1,15 @@
 FROM docker:25-dind
 
-RUN apk add --no-cache bash curl git
+RUN apk add --no-cache \
+    bash \
+    curl \
+    git \
+    helm
 
-# kubectl
-RUN curl -LO https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl \
-    && chmod +x kubectl \
-    && mv kubectl /usr/local/bin/
+# Install k3d
+RUN wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sh
 
-# helm
-RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-
-# k3d
-RUN curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
-
-WORKDIR /cluster
+WORKDIR /app
 
 COPY wiki-service ./wiki-service
 COPY wiki-chart ./wiki-chart
