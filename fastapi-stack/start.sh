@@ -1,40 +1,43 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 echo "Starting Docker daemon..."
-dockerd \
-  --host=unix:///var/run/docker.sock \
-  --host=tcp://0.0.0.0:2375 \
-  > /var/log/docker.log 2>&1 &
 
-sleep 10
+# Start Docker daemon in background
+dockerd-entrypoint.sh > /var/log/dockerd.log 2>&1 &
 
-# force k3d to use local socket
-unset DOCKER_HOST
-export DOCKER_HOST=unix:///var/run/docker.sock
+# Wait for Docker to be ready
+until docker info > /dev/null 2>&1
+do
+  echo "Waiting for Docker to start..."
+  sleep 2
+done
 
-echo "Docker info:"
-docker info
+echo "Docker is ready."
 
-echo "Creating k3d cluster..."
+# Create k3d cluster and expose port 8080
 k3d cluster create wiki \
   --agents 1 \
   -p "8080:80@loadbalancer"
 
-export KUBECONFIG=$(k3d kubeconfig write wiki)
+echo "k3d cluster created."
 
-echo "Building FastAPI image..."
-cd wiki-service
-docker build -t wiki-service .
-cd ..
+# Build FastAPI image inside DinD
+cd /app/wiki-service
+docker build -t wiki-service:latest .
 
-echo "Importing image into cluster..."
-k3d image import wiki-service -c wiki
+# Import image into k3d
+k3d image import wiki-service:latest -c wiki
 
-echo "Installing Helm chart..."
-cd wiki-chart
-helm dependency update || true
+echo "FastAPI image imported into cluster."
+
+# Install Helm chart
+cd /app/wiki-chart
 helm install wiki .
 
-echo "Cluster ready at http://localhost:8080"
+echo "Helm chart installed."
+
+echo "Cluster is fully ready on port 8080."
+
+# Keep container running
 tail -f /dev/null
