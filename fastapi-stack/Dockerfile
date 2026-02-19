@@ -1,15 +1,11 @@
 FROM docker:25-dind
 
-RUN apk add --no-cache \
-    bash \
-    curl \
-    git \
-    helm
+RUN apk add --no-cache bash curl
 
-# Install k3d
-RUN wget -q -O - https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | sh
+RUN curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
-WORKDIR /app
+WORKDIR /cluster
 
 COPY wiki-service ./wiki-service
 COPY wiki-chart ./wiki-chart
@@ -19,4 +15,4 @@ RUN chmod +x start.sh
 
 EXPOSE 8080
 
-CMD ["./start.sh"]
+ENTRYPOINT ["./start.sh"]
